@@ -1,0 +1,5 @@
+---
+lxd_password: "SomePassword"
+lxd_cluster_crt: "{{lookup('file', 'files/lxd.crt')}}"
+lxd_bootstrap_preseed_data: "{{lookup('template', 'templates/lxd-bootstrap-config.yml.j2')}}"
+lxd_member_preseed_data: "{{lookup('template', 'templates/lxd-cluster-config.yml.j2')}}"

@@ -1,0 +1,7 @@
+---
+- name: update the apt package index i.e. apt-get update
+  apt: update_cache=yes
+
+- name: Install vim
+  ansible.builtin.package:
+    name: vim

@@ -1,0 +1,68 @@
+---
+- name: update the apt package index i.e. apt-get update
+  apt: update_cache=yes
+
+- name: Install snap to install LXD
+  ansible.builtin.package:
+    name: snapd
+    state: latest
+
+- name: Install core and lxd snap
+  community.general.snap:
+    name:
+      - core
+      - lxd
+    classic: yes
+
+- name: Run LXD config cluster bootstrap
+  command: /snap/bin/lxd init --preseed 
+  args:
+    stdin: '{{ lxd_bootstrap_preseed_data }}'
+  when: "'server1' in inventory_hostname"
+
+- name: Copy LXD cluster key
+  ansible.builtin.copy:
+    src: lxd.key
+    dest: /var/snap/lxd/common/lxd/cluster.key
+    mode: 0600
+  when: "'server1' in inventory_hostname"
+
+- name: Copy LXD cluster crt
+  ansible.builtin.copy:
+    src: lxd.crt
+    dest: /var/snap/lxd/common/lxd/cluster.crt
+    mode: 0600
+  when: "'server1' in inventory_hostname"
+
+- name: Restart LXD for new certs
+  command: snap restart lxd
+  when: "'server1' in inventory_hostname"
+  
+- name: Run LXD config cluster member
+  command: /snap/bin/lxd init --preseed 
+  args:
+    stdin: '{{ lxd_member_preseed_data }}'
+  when: "'server1' not in inventory_hostname"
+
+- name: Add the user 'vagrant' to the group 'lxd'
+  ansible.builtin.user:
+    name: vagrant
+    groups: lxd
+    append: yes
+
+# setup iptables hack
+- name: Copy iptables rules
+  ansible.builtin.copy:
+    src: iptables.lxd.rules
+    dest: /etc/iptables.lxd.rules
+
+- name: Copy iptables restore script
+  ansible.builtin.copy:
+    src: iptables
+    dest: /etc/network/if-pre-up.d/iptables
+    mode: 0755
+
+- name: Allow connections from and to LXD containers
+  ansible.builtin.iptables:
+    chain: FORWARD
+    jump: ACCEPT

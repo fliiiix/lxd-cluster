@@ -1,0 +1,8 @@
+cluster:
+  enabled: true
+  server_name: "{{ansible_hostname}}"
+  server_address: "{{ ansible_eth1.ipv4.address }}:8443"
+  cluster_address: "192.168.10.10:8443"
+  cluster_certificate: | 
+{{ lxd_cluster_crt | indent( width=4, indentfirst=True) }}
+  cluster_password: "{{ lxd_password }}"
